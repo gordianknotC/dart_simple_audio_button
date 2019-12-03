@@ -23,6 +23,7 @@ class AudioPlayer implements AudioPlayerSketch{
 	@override AudioPlayerState state;
 	@override void onReady(void cb()){}
 	@override void dispose(){}
+  @override bool get initialized => false;
 }
 
 class AudioLoader implements AudioLoaderSketch{
@@ -52,4 +53,16 @@ class AudioLoader implements AudioLoaderSketch{
 	
 	@override void onUpdate(void onData(e), {bool cancelOthers = true}){}
 	@override void dispose(){}
+
+  @override bool get initialized => null;
+  @override void onLoading(void Function() onData) {  }
 }
+
+
+
+
+
+
+
+
+

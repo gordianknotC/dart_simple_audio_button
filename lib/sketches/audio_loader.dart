@@ -20,6 +20,7 @@ abstract class AudioPlayerSketch{
 	Future seek(double time);
 	Future pause();
 	Future stop();
+	bool get initialized;
 	Stream<AudioPlayerState> get stateStream;
 	Stream get positionChangedStream;
 	AudioPlayerState get state;
@@ -33,6 +34,7 @@ abstract class AudioLoaderSketch{
 	AudioModel get model;
 	AudioLoaderSketch(AudioModel model);
 	
+	bool get initialized;
 	bool get isLoaded 	;
 	bool get isPaused 	;
 	bool get isPlaying 	;
@@ -48,6 +50,7 @@ abstract class AudioLoaderSketch{
 	void playOrPause();
 	void stop();
 	
+	void onLoading(void onData());
 	void onPlay(void onData());
 	void onStopped(void onData());
 	void onPaused(void onData());

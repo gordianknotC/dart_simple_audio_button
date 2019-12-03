@@ -57,10 +57,11 @@ class AudioCache implements AudioCacheSketch{
 class _SingleAudioLocalPlayer implements AudioPlayerSketch{
 	static final Map<String, _SingleAudioLocalPlayer> _allplayers = {};
 	static final AudioPlayer _player = AudioPlayer();
-	
 	final String filepath;
 	@override AudioCacheSketch cache;
+	@override bool get initialized => _initialized;
 	bool activated = false;
+	bool _initialized;
 	
 	_SingleAudioLocalPlayer._(this.filepath, this.cache);
 	
@@ -103,6 +104,7 @@ class _SingleAudioLocalPlayer implements AudioPlayerSketch{
 		if (!cache.isCacheReady){
 			await cache.init();
 			_onLoadController.add(true);
+			_initialized = true;
 			return true;
 		}
 		return false;
@@ -154,6 +156,7 @@ class AudioLoader implements AudioLoaderSketch{
 	@override final AudioPlayerSketch player;
 	@override final _Model.AudioModel model;
 	
+	@override bool get initialized => player?.initialized ?? false;
 	@override bool get isLoaded 	=>  player?.cache?.material != null;
 	@override bool get isPaused 	=>  player?.state == _Model.AudioPlayerState.PAUSED;
 	@override bool get isPlaying 	=>  player?.state == _Model.AudioPlayerState.PLAYING;
@@ -163,7 +166,8 @@ class AudioLoader implements AudioLoaderSketch{
 		return player?.state;
 	}
 	
-	AudioLoader(this.model): player = _SingleAudioLocalPlayer(model.url, AudioCache(model.url));
+	AudioLoader(this.model):
+		player = _SingleAudioLocalPlayer(model.url, AudioCache(model.url));
 	
 	@override Future<bool> initAudio() async {
 		return player.initAudio();
@@ -225,7 +229,6 @@ class AudioLoader implements AudioLoaderSketch{
 				  case _Model.AudioPlayerState.LOADING:
 						_onLoading?.call();// TODO: Handle this case.
 				    break;
-				    
 					/// followings only supported on web...
 					case _Model.AudioPlayerState.CONTINUE:
 				  case _Model.AudioPlayerState.LOADED:
@@ -241,7 +244,7 @@ class AudioLoader implements AudioLoaderSketch{
 	}
 	
 	void Function() _onLoading;
-	void onLoading(void onData()) {
+	@override void onLoading(void onData()) {
 		_playerStateMonitorInit();
 		_onLoading = onData;
 	}

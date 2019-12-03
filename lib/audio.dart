@@ -18,7 +18,7 @@ import 'audio_model.dart';
 
 
 
-final _D = Logger(name:'AuWID', levels: LEVEL0);
+final _D = Logger(name:'AU_WID', levels: LEVEL0);
 
 
 enum EBtState{
@@ -102,21 +102,21 @@ class SimpleAudioButton extends StatefulWidget implements SingleGroupAwareWidget
 }
 
 class SimpleAudioButtonState extends State<SimpleAudioButton> with StatefulMixin {
-	AudioPlayerState get buttonState  => widget.audioLoader.state;
+	AudioPlayerState get buttonState  => widget.audioLoader.player.state;
 	SimpleAudioProgress progress;
 	Size contextSize;
 	
 	void addAllListeners(){
 		widget.audioLoader.onLoaded((){
-			_D.debug('onLoad: ${widget.model.url}, $buttonState');
+			_D.sys('onLoad: ${widget.audioLoader.model.url}, $buttonState');
 			setStateSafe((){});
 		});
 		widget.audioLoader.onStopped((){
-			_D.debug('onStopped: ${widget.model.url}');
+			_D.sys('onStopped: ${widget.audioLoader.model.url}, state $buttonState');
 			setStateSafe((){});
 		});
 		widget.audioLoader.onCompleted((){
-			_D.debug('onCOmpleted: ${widget.model.url}');
+			_D.sys('onCompleted: ${widget.audioLoader.model.url}, state $buttonState');
 			setStateSafe((){});
 		});
  
@@ -124,20 +124,17 @@ class SimpleAudioButtonState extends State<SimpleAudioButton> with StatefulMixin
 			widget.audioLoader.onUpdate((d) {
 				progressAware.current = (d as Duration).inSeconds.toDouble();
 			});
-			
 		}else {
 			widget.audioLoader.onUpdate((d){
 				progressAware.current = (d as num) /1000;
 			});
 		}
-		
-		
 		widget.audioLoader.onPaused((){
-			_D.debug('onPause: ${widget.model.url}');
+			_D.sys('onPause: ${widget.audioLoader.model.url}, state $buttonState');
 			setStateSafe((){});
 		});
 		widget.audioLoader.onPlay((){
-			_D.debug('onPlay: ${widget.model.url}');
+			_D.sys('onPlay: ${widget.audioLoader.model.url}, state $buttonState');
 			setStateSafe((){});
 		});
 	}
@@ -149,20 +146,20 @@ class SimpleAudioButtonState extends State<SimpleAudioButton> with StatefulMixin
     super.initState();
     _D.debug('initState on audioButton');
 		progressAware ??= SingleProgressAware(total: widget.model.length, current: 0);
-		widget.audioLoader.initAudio();
 		addAllListeners();
+		widget.audioLoader.initAudio();
 	}
  
 	void _stop(){
-		_D.debug('stop');
+		_D.debug('stop, $buttonState');
 		widget.audioLoader.stop();
 	}
 	void _play(){
-		_D.debug('play');
+		_D.debug('play, $buttonState');
 		widget.audioLoader.play();
 	}
 	void _pause(){
-		_D.debug('pause');
+		_D.debug('pause, $buttonState');
 		widget.audioLoader.pause();
 	}
 	void onPress(){
@@ -170,6 +167,7 @@ class SimpleAudioButtonState extends State<SimpleAudioButton> with StatefulMixin
 			_D.debug('block play back, since it"s still loading');
 			return;
 		}
+		_D.sys('onPress: ${buttonState}');
 		if (widget.audioLoader.isPlaying) {
 		  _pause();
 		}else{
@@ -236,30 +234,39 @@ class SimpleAudioButtonState extends State<SimpleAudioButton> with StatefulMixin
 	Widget buildNormalButton(){
 		return _buildButton(widget.playIcon ?? Icons.play_circle_outline);
 	}
-	Widget buildPausedButton(){
+	Widget buildStoppedButton(){
 		return _buildButton(widget.stopIcon ?? Icons.stop);
 	}
   Widget buildButton(){
 		switch (buttonState) {
+			case AudioPlayerState.CONTINUE:
 			case AudioPlayerState.PLAYING:
 				return buildPlayingButton();
+			case AudioPlayerState.SEEKED:
+			case AudioPlayerState.LOADED:
 			case AudioPlayerState.COMPLETED:
 			case AudioPlayerState.STOPPED:
 				return buildNormalButton();
+			case AudioPlayerState.SUSPEND:
 			case AudioPlayerState.PAUSED:
-				return buildPausedButton();
+				return buildNormalButton();
+			case AudioPlayerState.SEEKING:
+			case AudioPlayerState.WAITING:
+			case AudioPlayerState.LOADING:
+				return buildLoadingButton();
 			default:
 				if (buttonState == null) {
 				  return buildLoadingButton();
 				}
-				throw Exception('Uncaught Enum...');
+				throw Exception('Uncaught Enum... $buttonState');
+		  
 		}
 	}
 	
 	
 	double property_progress = 0;
 	@override Widget build(BuildContext context) {
-		_D.debug('build simple audio button:${buttonState}');
+		_D.debug('build simple audio button, ${widget.audioLoader.model.url}, ${widget.audioLoader.player.state}');
 		return buildButton();
 	}
 	

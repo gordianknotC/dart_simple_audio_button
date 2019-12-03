@@ -1,21 +1,65 @@
 import 'dart:async';
 import 'dart:html';
+import 'package:common/common.dart';
 
 import '../audio_model.dart';
 import '../sketches/audio_loader.dart';
 
+final _D = Logger(name:'AU_PLAY', levels: LEVEL0);
 
 
 class AudioPlayer implements AudioPlayerSketch{
+	static final Map<String, AudioPlayer> _allplayers = {};
+	final bool showLoadingTilFullyLoaded;
+	
 	@override AudioCacheSketch cache;
 	@override AudioPlayerState get state => _state;
+	@override bool get initialized => _initialized;
+	bool _initialized = false;
 	
-	final bool showLoadingTilFullyLoaded;
-	final AudioElement currentElt;
-	AudioPlayerState _state;
-	AudioPlayer(this.cache,{ this.showLoadingTilFullyLoaded = false}): currentElt = cache.material as AudioElement;
+	AudioElement get currentElt => cache.material as AudioElement;
+	AudioPlayerState _state = AudioPlayerState.LOADING;
+	
+	bool get isPlaying{
+		switch(state){
+		  case AudioPlayerState.PLAYING:
+		  case AudioPlayerState.CONTINUE:
+		    return true;
+			default:
+				return false;
+		}
+	}
+	
+	AudioPlayer._(this.cache,{ this.showLoadingTilFullyLoaded = false});
+	
+	factory AudioPlayer(AudioCacheSketch cache){
+		if (_allplayers.containsKey(cache.filepath)) {
+			return _allplayers[cache.filepath];
+		}
+		final result = AudioPlayer._(cache);
+		return _allplayers[cache.filepath] = result;
+	}
+	
+	
+	void load(){
+		_D.warning('load audio resource for ${cache.filepath}');
+		currentElt.load();
+	}
+	
+	void pauseAll(){
+		_allplayers.values.forEach((p){
+			p.pause();
+			/*if (p.isPlaying) {
+				p.pause();
+				_D.debug('pause ${p.cache.filename}');
+			}else{
+				_D.debug('continue ${p.cache.filename}, ${p.state}');
+			}*/
+		});
+	}
 	
 	@override Future play() {
+		pauseAll();
 		currentElt.play();
 		return Future.value();
 	}
@@ -25,16 +69,20 @@ class AudioPlayer implements AudioPlayerSketch{
 		return Future.value();
 	}
 	@override Future pause(){
-		currentElt?.pause();
+		currentElt.pause();
 		return Future.value();
 	}
 	@override Future stop(){
 		seek(0);
-		currentElt?.pause();
+		currentElt.pause();
 		return Future.value();
 	}
 	
-	@override Future<bool> initAudio(){
+	@override Future<bool> initAudio() async {
+		print('initAudio.. ');
+		await cache.init();
+		_initialized = true;
+		print('cache init finished.. ');
 		_onCanPlay();
 		_onContinuePlaying();
 		_onEnded();
@@ -45,6 +93,9 @@ class AudioPlayer implements AudioPlayerSketch{
 		_onStalled();
 		_onSuspend();
 		_onWaiting();
+		_onPause();
+		
+		await Future.delayed(Duration(seconds: 2), load);
 		return Future.value(true);
 	}
 	
@@ -59,14 +110,17 @@ class AudioPlayer implements AudioPlayerSketch{
 	final StreamController<AudioPlayerState> _stateController = StreamController<AudioPlayerState>.broadcast();
 	@override Stream<AudioPlayerState> get stateStream  => _stateController.stream;
 	
+	
+	
 	StreamSubscription<AudioPlayerState> onPlayerStateChangedSubscription;
 	void Function(AudioPlayerState e) _onPlayerStateChanged;
 	void onPlayerStateChanged(void onData(AudioPlayerState e), {bool cancelOthers = true}) {
 		if (cancelOthers) onPlayerStateChangedSubscription?.cancel?.call();
 		_onPlayerStateChanged = onData;
-		onPlayerStateChangedSubscription = stateStream.listen((state){
-			_state = state;
-			_onPlayerStateChanged(state);
+		onPlayerStateChangedSubscription = stateStream.listen((s){
+			_state = s;
+			_D.info('receive ${cache.filename} state: $state');
+			_onPlayerStateChanged(s);
 		});
 	}
 	
@@ -76,8 +130,8 @@ class AudioPlayer implements AudioPlayerSketch{
 	void onAudioPositionChanged(void onData(e), {bool cancelOthers = true}) {
 		if (cancelOthers) onAudioPositionChangedSubscription?.cancel?.call();
 		_onAudioPositionChanged = onData;
-		onAudioPositionChangedSubscription = currentElt.onTimeUpdate.listen((e){
-			_onAudioPositionChanged(currentElt.currentTime);
+		onAudioPositionChangedSubscription ??= currentElt?.onTimeUpdate?.listen((e){
+			_onAudioPositionChanged(currentElt?.currentTime);
 		});
 	}
 	
@@ -86,7 +140,7 @@ class AudioPlayer implements AudioPlayerSketch{
 	void onVolume(void onData(Event e), {bool cancelOthers = true}) {
 		if (cancelOthers) onVolumeSubscription?.cancel?.call();
 		_onVolume = onData;
-		onVolumeSubscription = currentElt.onVolumeChange.listen(_onVolume);
+		onVolumeSubscription ??= currentElt?.onVolumeChange?.listen(_onVolume);
 	}
 	
 	/*
@@ -108,7 +162,7 @@ class AudioPlayer implements AudioPlayerSketch{
 			if (showLoadingTilFullyLoaded){
 				_stateController.add(AudioPlayerState.LOADING);
 			}else{
-				_stateController.add(AudioPlayerState.PLAYING);
+				_stateController.add(AudioPlayerState.LOADED);
 			}
 		});
 	}
@@ -218,7 +272,17 @@ class AudioPlayer implements AudioPlayerSketch{
 		});
 	}
 	
+	
+	StreamSubscription<Event> onPausedSubscription;
+	void _onPause({bool cancelOthers = true}) {
+		if (cancelOthers) onPausedSubscription?.cancel?.call();
+		onPausedSubscription  = currentElt.onPause.listen((_){
+			_stateController.add(AudioPlayerState.PAUSED);
+		});
+	}
+	
 	@override void dispose(){
+		onPausedSubscription?.cancel();
 		onAudioPositionChangedSubscription?.cancel();
 		onCanPlaySubscription.cancel();
 		onContinuePlayingSubscription?.cancel();

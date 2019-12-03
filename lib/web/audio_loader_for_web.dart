@@ -1,18 +1,22 @@
 import 'dart:async';
 import 'dart:html';
+import 'package:flutter/services.dart';
 import 'package:path/path.dart' as _path;
 import 'package:common/common.dart';
 
 import '../audio_model.dart';
+import '../exceptions.dart';
 import '../sketches/audio_loader.dart';
 import 'audioplayer.dart';
 
-final _D = Logger(name:'AuLoad', levels: LEVEL0);
+final _D = Logger(name:'AU', levels: LEVEL0);
 
 class AudioCache implements AudioCacheSketch{
 	@override final String filepath;
 	@override final String folder;
 	@override final String filename;
+	String _selectorKey;
+	String get selectorKey => _selectorKey ??= filepath.replaceAll('/', '_');
 	
 	String rootId;
 	DivElement _rootAudio;
@@ -24,130 +28,41 @@ class AudioCache implements AudioCacheSketch{
 	
 	@override bool get isCacheReady => _elt != null;
 	@override AudioElement get material => _elt;
-	
-	void _createRootNode(){
+	@override Future init() {
+		_D.debug('cache init');
 		_rootAudio = document.querySelector('#$rootId') as DivElement;
+		_D.warning('search root audio: $_rootAudio');
 		if (_rootAudio == null){
 			_rootAudio = document.createElement("div") as DivElement;
 			_rootAudio.setAttribute("id", rootId);
 			querySelector('body').append(_rootAudio);
+			_D.warning('insert root audio: $_rootAudio');
 		}
-	}
-	
-	void _createAudioNode(){
-		_elt ??= _rootAudio.querySelector('audio[data-name=$filepath]') as AudioElement;
-		if (_elt == null){
-			final audio = document.createElement('audio');
-			audio.setAttribute("data-name", filepath);
-			_rootAudio.append(audio);
-		}
-	}
-	
-	@override Future init() async {
-		_createRootNode();
-		_createAudioNode();
 		
-		document.querySelector('#audio');
-		if (_elt != null) {
-		  return;
+		_elt ??= _rootAudio.querySelector('audio[data-name="$selectorKey"]') as AudioElement;
+		_D.warning('search sub audio $selectorKey, $_elt');
+		if (_elt == null){
+			_elt = document.createElement('audio') as AudioElement;
+			_elt.setAttribute("data-name", selectorKey);
+			_elt.setAttribute('src', _path.join("assets/assets/audio", filename));
+			
+			_rootAudio.append(_elt);
+			_D.warning('create sub audio $selectorKey, $_elt');
 		}
+		return Future.value();
 	}
 }
-
-
-/*
-
-class _SingleAudioLocalPlayer {
-	static final Map<String, _SingleAudioLocalPlayer> _allplayers = {};
-	static final AudioPlayer _player = AudioPlayer();
-	final String filepath;
-	final _AudioCache cache;
-	bool activated = false;
-	
-	_SingleAudioLocalPlayer._(this.filepath, this.cache);
-	
-	factory _SingleAudioLocalPlayer(String filepath, _AudioCache cache){
-		if (_allplayers.containsKey(filepath)) {
-		  return _allplayers[filepath];
-		}
-		final result = _SingleAudioLocalPlayer._(filepath, cache);
-		return _allplayers[filepath] = result;
-	}
-	
-	Future<bool> initAudio() async {
-		if (cache.elt == null){
-			await cache.init();
-			_onLoadController.add(true);
-			return true;
-		}
-		return false;
-	}
-	
-	AudioPlayerState get state {
-		if (cache.elt == null) {
-		  return null;
-		}
-		if (activated) {
-		  return _player.state;
-		}
-		return AudioPlayerState.STOPPED;
-	}
-	
-	Stream<AudioPlayerState> get onPlayerStateChanged {
-		return _player.stateStream;
-	}
-	Stream<num> get onAudioPositionChanged {
-		return _player.positionChangedStream;
-	}
-	
-	Future play(){
-		_allplayers.forEach((k, v){
-			if (v.activated && v.filepath != filepath){
-				_D('stop activated player: ${v.filepath}');
-				v.stop();
-			}
-		});
-		activated = true;
-		return cache.init().then((_){
-			_D('play $filepath');
-			return _player.play(cache.elt);
-		});
-	}
-	
-	void pause(){
-		_player.pause();
-	}
-	
-	void stop(){
-		activated = false;
-		_player.stop();
-	}
-	
-	final StreamController<bool> _onLoadController = StreamController<bool>.broadcast();
-	StreamSubscription<bool> _onLoadSubscription;
-	void Function() _onLoad;
-	void onLoad(void onData()) {
-		_onLoad = onData;
-		_onLoadSubscription = _onLoadController.stream.listen((_){
-			_onLoad();
-		});
-	}
-	
-	void dispose(){
-		_onLoadSubscription?.cancel();
-	}
-}
-*/
 
 
 class AudioLoader implements AudioLoaderSketch{
+	
 	@override AudioPlayerSketch player;
 	@override final AudioModel model;
-	final AudioCache cache;
-	
+	AudioCache cache;
+	@override bool get initialized => player?.initialized ?? false;
 	@override bool get isLoaded 	=>  player?.cache?.material != null;
 	@override bool get isPaused 	=>  player?.state == AudioPlayerState.PAUSED;
-	@override bool get isPlaying 	=>  player?.state == AudioPlayerState.PLAYING;
+	@override bool get isPlaying 	=>  player?.state == AudioPlayerState.PLAYING || player?.state == AudioPlayerState.CONTINUE;
 	@override bool get isCompleted=>  player?.state == AudioPlayerState.COMPLETED;
 	@override bool get isStopped 	=>  player?.state == AudioPlayerState.STOPPED;
 	@override AudioPlayerState get state {
@@ -158,26 +73,40 @@ class AudioLoader implements AudioLoaderSketch{
 		player = AudioPlayer(cache);
 	}
 	
+	void guard(){
+		if (!initialized) {
+			try {
+				throw AudioNotInitializedError();
+			} catch (e, s) {
+				print('[ERROR] AudioLoader.guard failed: $e\n$s');
+				rethrow;
+			}
+		}
+	}
 	@override Future<bool> initAudio() async {
 		await player.initAudio();
 		return Future.value(true);
 	}
 	
 	@override void playFromStart(){
+		guard();
 		player.stop();
 	}
 	
 	@override void play(){
+		guard();
 		player.play();
 	}
 	
 	@override void pause(){
+		guard();
 		if (player != null){
 			_D('pause ${model.url}');
 			player.pause();
 		}
 	}
 	@override void playOrPause(){
+		guard();
 		if (player != null){
 			if (player.state == AudioPlayerState.PLAYING) {
 			  pause();
@@ -189,6 +118,7 @@ class AudioLoader implements AudioLoaderSketch{
 		}
 	}
 	@override void stop(){
+		guard();
 		if (player != null){
 			player.stop();
 		}
@@ -197,48 +127,44 @@ class AudioLoader implements AudioLoaderSketch{
 	StreamSubscription<AudioPlayerState> get _onPlayerStateSubscription =>
 		(player as AudioPlayer).onPlayerStateChangedSubscription;
 	
+	void _log(){
+	
+	}
+	
 	void _playerStateMonitorInit(){
 		if (_onPlayerStateSubscription != null) {
 		  return;
 		}
 		(player as AudioPlayer).onPlayerStateChanged((state){
 			switch(state){
-				case AudioPlayerState.PLAYING:
-					_D('playing ${model.url}');
+				case AudioPlayerState.CONTINUE:
+					_D.debug('contiue:  ${model.url}, call onPlay..., ${player.state}, $_onPlay');
 					_onPlay?.call();
 					break;
-				case AudioPlayerState.PAUSED:
-					_D('paused ${model.url}');
-					_onPaused?.call();
-					break;
-				case AudioPlayerState.COMPLETED:
-					_D('completed ${model.url}');
-					_onCompleted?.call();
-					break;
-				case AudioPlayerState.CONTINUE:
-				// TODO: Handle this case.
-					break;
-				case AudioPlayerState.STOPPED:
-					_D('stopeed ${model.url}');
-					_onStopped?.call();
-					break;
-				case AudioPlayerState.LOADING:
-				// TODO: Handle this case.
-					break;
-				case AudioPlayerState.LOADED:
-				// TODO: Handle this case.
-					break;
-				case AudioPlayerState.SEEKING:
-				// TODO: Handle this case.
-					break;
-				case AudioPlayerState.SEEKED:
-				// TODO: Handle this case.
-					break;
-				case AudioPlayerState.WAITING:
-				// TODO: Handle this case.
+				case AudioPlayerState.PLAYING:
+					_D.debug('playing: ${model.url}, ${player.state}, $_onPlay');
+					_onPlay?.call();
 					break;
 				case AudioPlayerState.SUSPEND:
-				// TODO: Handle this case.
+				case AudioPlayerState.PAUSED:
+					_D.debug('paused:  ${model.url}, ${player.state}, $_onPaused');
+					_onPaused?.call();
+					break;
+				case AudioPlayerState.LOADED:
+				case AudioPlayerState.SEEKED:
+				case AudioPlayerState.COMPLETED:
+					_D.debug('ready/completed:  ${model.url}, ${player.state}, $_onCompleted');
+					_onCompleted?.call();
+					break;
+				case AudioPlayerState.STOPPED:
+					_D.debug('stopeed:  ${model.url}, ${player.state}, $_onStopped');
+					_onStopped?.call();
+					break;
+				case AudioPlayerState.SEEKING:
+				case AudioPlayerState.LOADING:
+				case AudioPlayerState.WAITING:
+					_D.debug('pending:  ${model.url}, ${player.state}, $_onLoading');
+					_onLoading?.call();
 					break;
 			}
 		});	}
@@ -258,6 +184,12 @@ class AudioLoader implements AudioLoaderSketch{
 	void Function() _onLoaded;
 	@override void onLoaded(void onData()) {
 		_onLoaded = onData;
+		_playerStateMonitorInit();
+	}
+	
+	void Function() _onLoading;
+	@override void onLoading(void onData()) {
+		_onLoading = onData;
 		_playerStateMonitorInit();
 	}
 	
