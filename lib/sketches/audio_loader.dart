@@ -8,7 +8,7 @@ abstract class AudioCacheSketch{
 	String get folder;
 	String get filename;
 	
-	Future init();
+	Future<dynamic> init();
 	bool get isCacheReady;
 	dynamic get material;
 }
@@ -57,6 +57,6 @@ abstract class AudioLoaderSketch{
 	void onCompleted(void onData());
 	void onLoaded(void onData());
 	
-	void onUpdate(void onData(e), {bool cancelOthers = true});
+	void onUpdate(void onData(dynamic e), {bool cancelOthers = true});
 	void dispose();
 }

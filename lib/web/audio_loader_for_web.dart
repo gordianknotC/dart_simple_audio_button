@@ -1,15 +1,12 @@
 import 'dart:async';
 import 'dart:html';
-import 'package:flutter/services.dart';
 import 'package:path/path.dart' as _path;
-import 'package:common/common.dart';
 
 import '../audio_model.dart';
 import '../exceptions.dart';
 import '../sketches/audio_loader.dart';
 import 'audioplayer.dart';
 
-final _D = Logger(name:'AU', levels: LEVEL0);
 
 class AudioCache implements AudioCacheSketch{
 	@override final String filepath;
@@ -29,27 +26,27 @@ class AudioCache implements AudioCacheSketch{
 	@override bool get isCacheReady => _elt != null;
 	@override AudioElement get material => _elt;
 	@override Future init() {
-		_D.debug('cache init');
+		print('cache init');
 		_rootAudio = document.querySelector('#$rootId') as DivElement;
-		_D.warning('search root audio: $_rootAudio');
+		print('search root audio: $_rootAudio');
 		if (_rootAudio == null){
 			_rootAudio = document.createElement("div") as DivElement;
 			_rootAudio.setAttribute("id", rootId);
 			querySelector('body').append(_rootAudio);
-			_D.warning('insert root audio: $_rootAudio');
+			print('insert root audio: $_rootAudio');
 		}
 		
 		_elt ??= _rootAudio.querySelector('audio[data-name="$selectorKey"]') as AudioElement;
-		_D.warning('search sub audio $selectorKey, $_elt');
+		print('search sub audio $selectorKey, $_elt');
 		if (_elt == null){
 			_elt = document.createElement('audio') as AudioElement;
 			_elt.setAttribute("data-name", selectorKey);
 			_elt.setAttribute('src', _path.join("assets/assets/audio", filename));
 			
 			_rootAudio.append(_elt);
-			_D.warning('create sub audio $selectorKey, $_elt');
+			print('create sub audio $selectorKey, $_elt');
 		}
-		return Future.value();
+		return Future<dynamic>.value();
 	}
 }
 
@@ -101,7 +98,7 @@ class AudioLoader implements AudioLoaderSketch{
 	@override void pause(){
 		guard();
 		if (player != null){
-			_D('pause ${model.url}');
+			print('pause ${model.url}');
 			player.pause();
 		}
 	}
@@ -127,9 +124,6 @@ class AudioLoader implements AudioLoaderSketch{
 	StreamSubscription<AudioPlayerState> get _onPlayerStateSubscription =>
 		(player as AudioPlayer).onPlayerStateChangedSubscription;
 	
-	void _log(){
-	
-	}
 	
 	void _playerStateMonitorInit(){
 		if (_onPlayerStateSubscription != null) {
@@ -138,32 +132,32 @@ class AudioLoader implements AudioLoaderSketch{
 		(player as AudioPlayer).onPlayerStateChanged((state){
 			switch(state){
 				case AudioPlayerState.CONTINUE:
-					_D.debug('contiue:  ${model.url}, call onPlay..., ${player.state}, $_onPlay');
+					print('contiue:  ${model.url}, call onPlay..., ${player.state}, $_onPlay');
 					_onPlay?.call();
 					break;
 				case AudioPlayerState.PLAYING:
-					_D.debug('playing: ${model.url}, ${player.state}, $_onPlay');
+					print('playing: ${model.url}, ${player.state}, $_onPlay');
 					_onPlay?.call();
 					break;
 				case AudioPlayerState.SUSPEND:
 				case AudioPlayerState.PAUSED:
-					_D.debug('paused:  ${model.url}, ${player.state}, $_onPaused');
+					print('paused:  ${model.url}, ${player.state}, $_onPaused');
 					_onPaused?.call();
 					break;
 				case AudioPlayerState.LOADED:
 				case AudioPlayerState.SEEKED:
 				case AudioPlayerState.COMPLETED:
-					_D.debug('ready/completed:  ${model.url}, ${player.state}, $_onCompleted');
+					print('ready/completed:  ${model.url}, ${player.state}, $_onCompleted');
 					_onCompleted?.call();
 					break;
 				case AudioPlayerState.STOPPED:
-					_D.debug('stopeed:  ${model.url}, ${player.state}, $_onStopped');
+					print('stopeed:  ${model.url}, ${player.state}, $_onStopped');
 					_onStopped?.call();
 					break;
 				case AudioPlayerState.SEEKING:
 				case AudioPlayerState.LOADING:
 				case AudioPlayerState.WAITING:
-					_D.debug('pending:  ${model.url}, ${player.state}, $_onLoading');
+					print('pending:  ${model.url}, ${player.state}, $_onLoading');
 					_onLoading?.call();
 					break;
 			}
@@ -181,6 +175,7 @@ class AudioLoader implements AudioLoaderSketch{
 		_playerStateMonitorInit();
 	}
 	
+// ignore: unused_field
 	void Function() _onLoaded;
 	@override void onLoaded(void onData()) {
 		_onLoaded = onData;
@@ -205,13 +200,13 @@ class AudioLoader implements AudioLoaderSketch{
 		_onCompleted = onData;
 	}
 	
-	@override void onUpdate(void onData(e), {bool cancelOthers = true}) {
-		_D.info('onUpdate init');
+	@override void onUpdate(void onData(dynamic e), {bool cancelOthers = true}) {
+		print('onUpdate init');
 		(player as AudioPlayer).onAudioPositionChanged(onData);
 	}
 	
 	@override void dispose(){
-		_D.info('dispose audio player...');
+		print('dispose audio player...');
 		player.dispose();
 	}
 }

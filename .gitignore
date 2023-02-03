@@ -25,8 +25,14 @@
 .dart_tool/
 .flutter-plugins
 .packages
+._.flutter-plugins
+._.flutter-plugins-dependencies
+._.packages
+._pubspec.lock
+.flutter-plugins-dependencies
 .pub-cache/
 .pub/
+.fvm/
 build/
 
 # Android related

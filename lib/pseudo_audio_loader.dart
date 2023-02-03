@@ -51,9 +51,10 @@ class AudioLoader implements AudioLoaderSketch{
 	@override void onCompleted(void onData()){}
 	@override void onLoaded(void onData()){}
 	
-	@override void onUpdate(void onData(e), {bool cancelOthers = true}){}
+	@override void onUpdate(void onData(dynamic e), {bool cancelOthers = true}){}
 	@override void dispose(){}
 
+  // ignore: avoid_returning_null
   @override bool get initialized => null;
   @override void onLoading(void Function() onData) {  }
 }

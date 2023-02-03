@@ -1,11 +1,8 @@
 import 'dart:async';
 import 'dart:html';
-import 'package:common/common.dart';
 
 import '../audio_model.dart';
 import '../sketches/audio_loader.dart';
-
-final _D = Logger(name:'AU_PLAY', levels: LEVEL0);
 
 
 class AudioPlayer implements AudioPlayerSketch{
@@ -42,7 +39,7 @@ class AudioPlayer implements AudioPlayerSketch{
 	
 	
 	void load(){
-		_D.warning('load audio resource for ${cache.filepath}');
+		print('load audio resource for ${cache.filepath}');
 		currentElt.load();
 	}
 	
@@ -51,31 +48,31 @@ class AudioPlayer implements AudioPlayerSketch{
 			p.pause();
 			/*if (p.isPlaying) {
 				p.pause();
-				_D.debug('pause ${p.cache.filename}');
+				print('pause ${p.cache.filename}');
 			}else{
-				_D.debug('continue ${p.cache.filename}, ${p.state}');
+				print('continue ${p.cache.filename}, ${p.state}');
 			}*/
 		});
 	}
 	
-	@override Future play() {
+	@override Future<dynamic> play() {
 		pauseAll();
 		currentElt.play();
-		return Future.value();
+		return Future<dynamic>.value();
 	}
 	
-	@override Future seek(num time){
+	@override Future<dynamic> seek(num time){
 		currentElt.currentTime = time;
-		return Future.value();
+		return Future<dynamic>.value();
 	}
-	@override Future pause(){
+	@override Future<dynamic> pause(){
 		currentElt.pause();
-		return Future.value();
+		return Future<dynamic>.value();
 	}
-	@override Future stop(){
+	@override Future<dynamic> stop(){
 		seek(0);
 		currentElt.pause();
-		return Future.value();
+		return Future<dynamic>.value();
 	}
 	
 	@override Future<bool> initAudio() async {
@@ -100,7 +97,7 @@ class AudioPlayer implements AudioPlayerSketch{
 	}
 	
 	@override void onReady(void cb()){
-		throw UnimplementedError('listen to stateStream instead');
+		throw UnimplementedError('onReady is not Implemented, listen to stateStream instead');
 	}
 	/*
 	*
@@ -119,7 +116,7 @@ class AudioPlayer implements AudioPlayerSketch{
 		_onPlayerStateChanged = onData;
 		onPlayerStateChangedSubscription = stateStream.listen((s){
 			_state = s;
-			_D.info('receive ${cache.filename} state: $state');
+			print('receive ${cache.filename} state: $state');
 			_onPlayerStateChanged(s);
 		});
 	}
@@ -127,7 +124,7 @@ class AudioPlayer implements AudioPlayerSketch{
 	StreamSubscription<Event> onAudioPositionChangedSubscription;
 	@override Stream<num> get positionChangedStream  => currentElt.onTimeUpdate.map((_) => currentElt.currentTime);
 	void Function(dynamic e) _onAudioPositionChanged;
-	void onAudioPositionChanged(void onData(e), {bool cancelOthers = true}) {
+	void onAudioPositionChanged(void onData(dynamic e), {bool cancelOthers = true}) {
 		if (cancelOthers) onAudioPositionChangedSubscription?.cancel?.call();
 		_onAudioPositionChanged = onData;
 		onAudioPositionChangedSubscription ??= currentElt?.onTimeUpdate?.listen((e){

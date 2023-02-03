@@ -1,17 +1,15 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:common/common.dart';
 import 'package:flutter/services.dart';
 import 'package:audioplayer/audioplayer.dart';
 import 'package:path/path.dart' as _path;
 import 'package:path_provider/path_provider.dart';
 
+// ignore: library_prefixes
 import '../audio_model.dart' as _Model;
 import '../sketches/audio_loader.dart';
 
-
-final _D = Logger(name:'AuLoad', levels: LEVEL0);
 
 _Model.AudioPlayerState mapState(AudioPlayerState state){
 	switch(state){
@@ -76,13 +74,13 @@ class _SingleAudioLocalPlayer implements AudioPlayerSketch{
 	@override Future play(){
 		_allplayers.forEach((k, v){
 			if (v.activated && v.filepath != filepath){
-				_D('stop activated player: ${v.filepath}');
+				print('stop activated player: ${v.filepath}');
 				v.stop();
 			}
 		});
 		activated = true;
 		return cache.init().then((_){
-			_D('play $filepath');
+			print('play $filepath');
 			return _player.play(cache.material as String, isLocal: true);
 		});
 	}
@@ -97,7 +95,7 @@ class _SingleAudioLocalPlayer implements AudioPlayerSketch{
 	}
 	
 	@override Future seek(double t){
-		throw UnimplementedError("seek method");
+		throw UnimplementedError("seek method is not implemented yet");
 	}
 	
 	@override Future<bool> initAudio() async {
@@ -184,7 +182,7 @@ class AudioLoader implements AudioLoaderSketch{
 	
 	@override void pause(){
 		if (player != null){
-			_D('pause ${model.url}');
+			print('pause ${model.url}');
 			player.pause();
 		}
 	}
@@ -211,19 +209,19 @@ class AudioLoader implements AudioLoaderSketch{
 			_onPlayerStateSubscription ??= player.stateStream.listen((state){
 				switch(state){
 					case _Model.AudioPlayerState.STOPPED:
-						_D('stopeed ${model.url}');
+						print('stopeed ${model.url}');
 						_onStopped?.call();
 						break;
 					case _Model.AudioPlayerState.PLAYING:
-						_D('playing ${model.url}');
+						print('playing ${model.url}');
 						_onPlay?.call();
 						break;
 					case _Model.AudioPlayerState.PAUSED:
-						_D('paused ${model.url}');
+						print('paused ${model.url}');
 						_onPaused?.call();
 						break;
 					case _Model.AudioPlayerState.COMPLETED:
-						_D('completed ${model.url}');
+						print('completed ${model.url}');
 						_onCompleted?.call();
 						break;
 				  case _Model.AudioPlayerState.LOADING:
@@ -239,7 +237,7 @@ class AudioLoader implements AudioLoaderSketch{
 				    throw UnsupportedError('unsupported event $state for mobile');
 				}
 			});
-			_D.info('_playerStateMonitorInit: $_onPlayerStateSubscription');
+			print('_playerStateMonitorInit: $_onPlayerStateSubscription');
 		}
 	}
 	
@@ -279,8 +277,8 @@ class AudioLoader implements AudioLoaderSketch{
 	
 	StreamSubscription<Duration> onUpdateSubscription;
 	void Function(Duration) _onUpdate;
-	@override void onUpdate(void onData(e), {bool cancelOthers = true}) {
-		_D.info('onUpdate init');
+	@override void onUpdate(void onData(dynamic e), {bool cancelOthers = true}) {
+		print('onUpdate init');
 		if (cancelOthers) onUpdateSubscription?.cancel?.call();
 		_onUpdate = onData;
 		onUpdateSubscription = (player as _SingleAudioLocalPlayer).positionChangedStream
@@ -289,7 +287,7 @@ class AudioLoader implements AudioLoaderSketch{
 	}
 	
 	@override void dispose(){
-		_D.info('dispose audio player...');
+		print('dispose audio player...');
 		_onPlayerStateSubscription?.cancel();
 		onUpdateSubscription?.cancel();
 		(player as _SingleAudioLocalPlayer)._onLoadSubscription?.cancel();
