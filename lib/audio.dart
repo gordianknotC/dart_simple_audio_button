@@ -5,7 +5,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:behaviors/behaviors.dart';
 import 'package:simple_audio_button/layout/stateful.dart';
-import 'package:simple_audio_button/layout/icons/spiningIcon.dart';
+import 'package:simple_audio_button/layout/icons/spining_icon.dart';
 
 import 'pseudo_audio_loader.dart'
     if (dart.library.io) 'mobile/audio_loader_for_mobile.dart'

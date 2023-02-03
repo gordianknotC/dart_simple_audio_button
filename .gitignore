@@ -29,6 +29,7 @@
 ._.flutter-plugins-dependencies
 ._.packages
 ._pubspec.lock
+._.fvm
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/

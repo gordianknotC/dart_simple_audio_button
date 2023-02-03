@@ -7,5 +7,5 @@ export 'pseudo_audio_loader.dart'
 // ignore: directives_ordering
 export 'audio.dart';
 export 'audio_model.dart';
-export 'audioGroup.dart'; // ignore: directives_ordering
+export 'audio_group.dart'; // ignore: directives_ordering
 export 'sketches/audio_loader.dart';
