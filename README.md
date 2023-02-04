@@ -1,9 +1,14 @@
 ![img.png](img.png)
-simple audio button
+simple audio button, 支援 android / web，待測
+
+### Platform Support
+- android
+- web
+- ios(not tested yet)
+
 
 ### Usage
 ```dart
-
 class AudioResources{
   static int calc(int minute, int second) => minute * 60 + second;
   static AudioModel electronicalA = AudioModel(
