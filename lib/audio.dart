@@ -3,11 +3,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:behaviors/behaviors.dart';
+import 'package:ui_common_behaviors/ui_common_behaviors.dart';
 import 'package:simple_audio_button/layout/stateful.dart';
 import 'package:simple_audio_button/layout/icons/spining_icon.dart';
 
-import 'pseudo_audio_loader.dart'
+import 'audio_loader.dart'
     if (dart.library.io) 'mobile/audio_loader_for_mobile.dart'
     if (dart.library.html) 'web/audio_loader_for_web.dart';
 
@@ -37,19 +37,17 @@ T Function(C) observerGuard<T, C>(T expression(), Object message) {
 class SimpleAudioProgress extends StatelessWidget {
   final double width;
   final double height;
-  final EdgeInsets padding;
   final SingleProgressAware awareness;
   final Color bgColor;
   final Color progressColor;
 
   const SimpleAudioProgress(
     this.awareness, {
-    @required this.width,
-    this.padding,
-    this.height,
-    Key key,
-    this.bgColor,
-    this.progressColor,
+    required this.width,
+    required this.height,
+    required this.bgColor,
+    required this.progressColor,
+    Key? key,
   }) : super(key: key);
 
   @override
@@ -57,8 +55,8 @@ class SimpleAudioProgress extends StatelessWidget {
     return Observer(
         builder: observerGuard(() {
       //OB:
-      final property_progress = awareness.property_progress;
-      print('progress: $property_progress - ${width * property_progress}');
+      final progress = awareness.progress;
+      print('progress: $progress - ${width * progress}');
       return Container(
           height: height,
           width: width,
@@ -67,7 +65,7 @@ class SimpleAudioProgress extends StatelessWidget {
           alignment: AlignmentDirectional.center,
           child: Container(
               height: height,
-              width: width * property_progress,
+              width: width * progress,
               color: progressColor));
     }, "SimpleAudioProgress.build"));
   }
@@ -79,13 +77,13 @@ class SimpleAudioButton extends StatefulWidget
   final AudioModel model;
   final double height;
   final double width;
-  final void Function(AudioModel model) onPress;
+  final void Function(AudioModel model)? onPress;
   final AudioLoader audioLoader;
 
   final IconData spinIcon;
-  final IconData playIcon;
-  final IconData pauseIcon;
-  final IconData stopIcon;
+  late IconData? playIcon;
+  late IconData? pauseIcon;
+  late IconData? stopIcon;
 
   final Color activeIconColor;
   final Color inactiveIconColor;
@@ -98,26 +96,26 @@ class SimpleAudioButton extends StatefulWidget
   final Color inProgressColor;
 
   @override
-  SingleGroupAware<AudioModel> Function() awareness;
+  final SingleGroupAware<AudioModel> Function() awareness;
 
   SimpleAudioButton(
     this.model, {
-    @required this.width,
+    required this.width,
     this.height = 32,
     this.onPress,
-    this.awareness,
-    this.spinIcon,
+    required this.awareness,
+        required this.spinIcon,
     this.playIcon,
     this.stopIcon,
     this.pauseIcon,
-    this.boldStyle,
-    this.literalStyle,
-    this.accentStyle,
-    this.activeIconColor,
-    this.inactiveIconColor,
-    this.progressBgColor,
-    this.inProgressColor,
-    Key key,
+    required this.boldStyle,
+    required this.literalStyle,
+    required this.accentStyle,
+    required this.activeIconColor,
+    required this.inactiveIconColor,
+    required this.progressBgColor,
+    required this.inProgressColor,
+    Key? key,
   })  : audioLoader = AudioLoader(model),
         super(key: key);
 
@@ -130,9 +128,19 @@ class SimpleAudioButton extends StatefulWidget
 
 class SimpleAudioButtonState extends State<SimpleAudioButton>
     with StatefulMixin {
-  AudioPlayerState get buttonState => widget.audioLoader.player.state;
-  SimpleAudioProgress progress;
-  Size contextSize;
+  AudioPlayerState? get buttonState => widget.audioLoader.player.state;
+  SimpleAudioProgress? progress;
+  Size? contextSize;
+  late SingleProgressAware<double> progressAware;
+
+  @override
+  void initState() {
+    super.initState();
+    print('initState on audioButton');
+    progressAware = SingleProgressAware(total: widget.model.length, current: 0);
+    addAllListeners();
+    widget.audioLoader.initAudio();
+  }
 
   void addAllListeners() {
     widget.audioLoader.onLoaded(() {
@@ -168,17 +176,7 @@ class SimpleAudioButtonState extends State<SimpleAudioButton>
     });
   }
 
-  SingleProgressAware<double> progressAware;
 
-  @override
-  void initState() {
-    super.initState();
-    print('initState on audioButton');
-    progressAware ??=
-        SingleProgressAware(total: widget.model.length, current: 0);
-    addAllListeners();
-    widget.audioLoader.initAudio();
-  }
 
   void _stop() {
     print('stop, $buttonState');
@@ -223,18 +221,18 @@ class SimpleAudioButtonState extends State<SimpleAudioButton>
     ///
     /// fetch context size on post frame...
     SchedulerBinding.instance.addPostFrameCallback((_) {
-      contextSize = context?.size;
+      contextSize = context.size;
       print('update contextSize: $contextSize');
     });
 
-    final double w = contextSize == null ? 0 : contextSize.width;
+    final double w = contextSize == null ? 0 : (contextSize?.width ?? 0);
 
     final mainButton = Tooltip(
       message: widget.model.title,
       child: MaterialButton(
         onPressed: onPress,
         elevation: 2,
-        child: FlatButton.icon(
+        child: ElevatedButton.icon(
           onPressed: null,
           icon: spining
               ? SpiningIcon(icon,
@@ -259,11 +257,13 @@ class SimpleAudioButtonState extends State<SimpleAudioButton>
       children: <Widget>[
         mainButton,
         if (contextSize != null)
-          progress ??= SimpleAudioProgress(progressAware,
+          progress ??= SimpleAudioProgress(
+              progressAware,
               bgColor: widget.progressBgColor,
               progressColor: widget.inProgressColor,
               width: w,
-              height: 2)
+              height: 2
+          )
       ],
     );
   }

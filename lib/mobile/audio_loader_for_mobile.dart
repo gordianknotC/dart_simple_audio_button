@@ -22,7 +22,6 @@ _Model.AudioPlayerState mapState(AudioPlayerState state){
 	  case AudioPlayerState.COMPLETED:
 			return _Model.AudioPlayerState.COMPLETED;
 	}
-	return null;
 }
 
 
@@ -31,12 +30,11 @@ class AudioCache implements AudioCacheSketch{
 	@override final String filepath;
 	@override final String folder;
 	@override final String filename;
-	
-	String _cacheString;
+	late String? _cacheString;
 	AudioCache(this.filepath): folder = _path.dirname(filepath), filename = _path.basename(filepath);
 	
 	@override bool get isCacheReady => _cacheString != null;
-	@override String get material => _cacheString;
+	@override String get material => _cacheString!;
 	
 	@override Future init() async {
 		if (_cacheString != null) {
@@ -58,14 +56,17 @@ class _SingleAudioLocalPlayer implements AudioPlayerSketch{
 	final String filepath;
 	@override AudioCacheSketch cache;
 	@override bool get initialized => _initialized;
+	late bool _initialized;
 	bool activated = false;
-	bool _initialized;
-	
+	final StreamController<bool> _onLoadController = StreamController<bool>.broadcast();
+	StreamSubscription<bool>? _onLoadSubscription;
+	void Function()? _onLoad;
+
 	_SingleAudioLocalPlayer._(this.filepath, this.cache);
 	
 	factory _SingleAudioLocalPlayer(String filepath, AudioCache cache){
 		if (_allplayers.containsKey(filepath)) {
-		  return _allplayers[filepath];
+		  return _allplayers[filepath]!;
 		}
 		final result = _SingleAudioLocalPlayer._(filepath, cache);
 		return _allplayers[filepath] = result;
@@ -108,7 +109,7 @@ class _SingleAudioLocalPlayer implements AudioPlayerSketch{
 		return false;
 	}
 	
-	@override _Model.AudioPlayerState get state {
+	@override _Model.AudioPlayerState? get state {
 		if (!cache.isCacheReady) {
 		  return null;
 		}
@@ -131,16 +132,11 @@ class _SingleAudioLocalPlayer implements AudioPlayerSketch{
 			return activated;
 		});
 	}
-	
-	
-	
-	final StreamController<bool> _onLoadController = StreamController<bool>.broadcast();
-	StreamSubscription<bool> _onLoadSubscription;
-	void Function() _onLoad;
+
 	@override void onReady(void onData()) {
 		_onLoad = onData;
 		_onLoadSubscription = _onLoadController.stream.listen((_){
-			_onLoad();
+			_onLoad?.call();
 		});
 	}
 	
@@ -154,14 +150,14 @@ class AudioLoader implements AudioLoaderSketch{
 	@override final AudioPlayerSketch player;
 	@override final _Model.AudioModel model;
 	
-	@override bool get initialized => player?.initialized ?? false;
-	@override bool get isLoaded 	=>  player?.cache?.material != null;
-	@override bool get isPaused 	=>  player?.state == _Model.AudioPlayerState.PAUSED;
-	@override bool get isPlaying 	=>  player?.state == _Model.AudioPlayerState.PLAYING;
-	@override bool get isCompleted=>  player?.state == _Model.AudioPlayerState.COMPLETED;
-	@override bool get isStopped 	=>  player?.state == _Model.AudioPlayerState.STOPPED;
-	@override _Model.AudioPlayerState get state {
-		return player?.state;
+	@override bool get initialized => player.initialized ?? false;
+	@override bool get isLoaded 	=>  player.cache.material != null;
+	@override bool get isPaused 	=>  player.state == _Model.AudioPlayerState.PAUSED;
+	@override bool get isPlaying 	=>  player.state == _Model.AudioPlayerState.PLAYING;
+	@override bool get isCompleted=>  player.state == _Model.AudioPlayerState.COMPLETED;
+	@override bool get isStopped 	=>  player.state == _Model.AudioPlayerState.STOPPED;
+	@override _Model.AudioPlayerState? get state {
+		return player.state;
 	}
 	
 	AudioLoader(this.model):
@@ -203,7 +199,7 @@ class AudioLoader implements AudioLoaderSketch{
 		}
 	}
 	
-	StreamSubscription<_Model.AudioPlayerState> _onPlayerStateSubscription;
+	StreamSubscription<_Model.AudioPlayerState>? _onPlayerStateSubscription;
 	void _playerStateMonitorInit(){
 		if (_onPlayerStateSubscription == null){
 			_onPlayerStateSubscription ??= player.stateStream.listen((state){
@@ -241,31 +237,31 @@ class AudioLoader implements AudioLoaderSketch{
 		}
 	}
 	
-	void Function() _onLoading;
+	void Function()? _onLoading;
 	@override void onLoading(void onData()) {
 		_playerStateMonitorInit();
 		_onLoading = onData;
 	}
 	
-	void Function() _onPlay;
+	void Function()? _onPlay;
 	@override void onPlay(void onData()) {
 		_playerStateMonitorInit();
 		_onPlay = onData;
 	}
 	
-	void Function() _onStopped;
+	void Function()? _onStopped;
 	@override void onStopped(void onData()) {
 		_playerStateMonitorInit();
 		_onStopped = onData;
 	}
 	
-	void Function() _onPaused;
+	void Function()? _onPaused;
 	@override void onPaused(void onData()) {
 		_playerStateMonitorInit();
 		_onPaused = onData;
 	}
 	
-	void Function() _onCompleted;
+	void Function()? _onCompleted;
 	@override void onCompleted(void onData()) {
 		_playerStateMonitorInit();
 		_onCompleted = onData;
@@ -275,11 +271,12 @@ class AudioLoader implements AudioLoaderSketch{
 		player.onReady(onData);
 	}
 	
-	StreamSubscription<Duration> onUpdateSubscription;
-	void Function(Duration) _onUpdate;
+	StreamSubscription<Duration>? onUpdateSubscription;
+	void Function(Duration)? _onUpdate;
 	@override void onUpdate(void onData(dynamic e), {bool cancelOthers = true}) {
 		print('onUpdate init');
-		if (cancelOthers) onUpdateSubscription?.cancel?.call();
+		if (cancelOthers)
+			onUpdateSubscription?.cancel();
 		_onUpdate = onData;
 		onUpdateSubscription = (player as _SingleAudioLocalPlayer).positionChangedStream
 			.where((e) => (player as _SingleAudioLocalPlayer).activated)

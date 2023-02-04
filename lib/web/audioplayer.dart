@@ -31,7 +31,7 @@ class AudioPlayer implements AudioPlayerSketch{
 	
 	factory AudioPlayer(AudioCacheSketch cache){
 		if (_allplayers.containsKey(cache.filepath)) {
-			return _allplayers[cache.filepath];
+			return _allplayers[cache.filepath]!;
 		}
 		final result = AudioPlayer._(cache);
 		return _allplayers[cache.filepath] = result;
@@ -109,35 +109,35 @@ class AudioPlayer implements AudioPlayerSketch{
 	
 	
 	
-	StreamSubscription<AudioPlayerState> onPlayerStateChangedSubscription;
-	void Function(AudioPlayerState e) _onPlayerStateChanged;
+	StreamSubscription<AudioPlayerState>? onPlayerStateChangedSubscription;
+	void Function(AudioPlayerState e)? _onPlayerStateChanged;
 	void onPlayerStateChanged(void onData(AudioPlayerState e), {bool cancelOthers = true}) {
-		if (cancelOthers) onPlayerStateChangedSubscription?.cancel?.call();
+		if (cancelOthers) onPlayerStateChangedSubscription?.cancel();
 		_onPlayerStateChanged = onData;
 		onPlayerStateChangedSubscription = stateStream.listen((s){
 			_state = s;
 			print('receive ${cache.filename} state: $state');
-			_onPlayerStateChanged(s);
+			_onPlayerStateChanged!(s);
 		});
 	}
 	
-	StreamSubscription<Event> onAudioPositionChangedSubscription;
+	StreamSubscription<Event>? onAudioPositionChangedSubscription;
 	@override Stream<num> get positionChangedStream  => currentElt.onTimeUpdate.map((_) => currentElt.currentTime);
-	void Function(dynamic e) _onAudioPositionChanged;
+	void Function(dynamic e)? _onAudioPositionChanged;
 	void onAudioPositionChanged(void onData(dynamic e), {bool cancelOthers = true}) {
-		if (cancelOthers) onAudioPositionChangedSubscription?.cancel?.call();
+		if (cancelOthers) onAudioPositionChangedSubscription?.cancel();
 		_onAudioPositionChanged = onData;
-		onAudioPositionChangedSubscription ??= currentElt?.onTimeUpdate?.listen((e){
-			_onAudioPositionChanged(currentElt?.currentTime);
+		onAudioPositionChangedSubscription ??= currentElt.onTimeUpdate.listen((e){
+			_onAudioPositionChanged!(currentElt.currentTime);
 		});
 	}
 	
-	StreamSubscription<Event> onVolumeSubscription;
-	void Function(Event e) _onVolume;
+	StreamSubscription<Event>? onVolumeSubscription;
+	void Function(Event e)? _onVolume;
 	void onVolume(void onData(Event e), {bool cancelOthers = true}) {
-		if (cancelOthers) onVolumeSubscription?.cancel?.call();
+		if (cancelOthers) onVolumeSubscription?.cancel();
 		_onVolume = onData;
-		onVolumeSubscription ??= currentElt?.onVolumeChange?.listen(_onVolume);
+		onVolumeSubscription ??= currentElt.onVolumeChange.listen(_onVolume);
 	}
 	
 	/*
@@ -152,9 +152,9 @@ class AudioPlayer implements AudioPlayerSketch{
 	/// but estimates that not enough data has been loaded to play the
 	/// media up to its end without having to stop for further buffering
 	/// of content.
-	StreamSubscription<Event> onCanPlaySubscription;
+	StreamSubscription<Event>? onCanPlaySubscription;
 	void _onCanPlay({bool cancelOthers = true}) {
-		if (cancelOthers) onCanPlaySubscription?.cancel?.call();
+		if (cancelOthers) onCanPlaySubscription?.cancel();
 		onCanPlaySubscription = currentElt.onCanPlay.listen((_){
 			if (showLoadingTilFullyLoaded){
 				_stateController.add(AudioPlayerState.LOADING);
@@ -167,9 +167,9 @@ class AudioPlayer implements AudioPlayerSketch{
 	/// [AudioPlayerState.CONTINUE]
 	/// The playing event is fired when playback is ready to start after having
 	/// been paused or delayed due to lack of data.
-	StreamSubscription<Event> onContinuePlayingSubscription;
+	StreamSubscription<Event>? onContinuePlayingSubscription;
 	void _onContinuePlaying({bool cancelOthers = true}) {
-		if (cancelOthers) onContinuePlayingSubscription?.cancel?.call();
+		if (cancelOthers) onContinuePlayingSubscription?.cancel();
 		onContinuePlayingSubscription = currentElt.onPlaying.listen((_){
 			_stateController.add(AudioPlayerState.CONTINUE);
 		});
@@ -178,9 +178,9 @@ class AudioPlayer implements AudioPlayerSketch{
 	/// [AudioPlayerState.SEEKING]
 	/// The seeking event is fired when a seek operation starts, meaning the Boolean
 	/// seeking attribute has changed to true and the media is seeking a new position.
-	StreamSubscription<Event> onSeekingSubscription;
+	StreamSubscription<Event>? onSeekingSubscription;
 	void _onSeeking({bool cancelOthers = true}) {
-		if (cancelOthers) onSeekingSubscription?.cancel?.call();
+		if (cancelOthers) onSeekingSubscription?.cancel();
 		onSeekingSubscription = currentElt.onSeeking.listen((_){
 			_stateController.add(AudioPlayerState.SEEKING);
 		});
@@ -188,9 +188,9 @@ class AudioPlayer implements AudioPlayerSketch{
 	
 	/// [AudioPlayerState.SEEKED]
 	///
-	StreamSubscription<Event> onSeekedSubscription;
+	StreamSubscription<Event>? onSeekedSubscription;
 	void _onSeeked({bool cancelOthers = true}) {
-		if (cancelOthers) onSeekingSubscription?.cancel?.call();
+		if (cancelOthers) onSeekingSubscription?.cancel();
 		onSeekedSubscription = currentElt.onSeeked.listen((_){
 			_stateController.add(AudioPlayerState.SEEKED);
 		});
@@ -200,9 +200,9 @@ class AudioPlayer implements AudioPlayerSketch{
 	///
 	/// The waiting event is fired when playback has stopped because
 	/// of a temporary lack of data.
-	StreamSubscription<Event> onWaitingSubscription;
+	StreamSubscription<Event>? onWaitingSubscription;
 	void _onWaiting({bool cancelOthers = true}) {
-		if (cancelOthers) onWaitingSubscription?.cancel?.call();
+		if (cancelOthers) onWaitingSubscription?.cancel();
 		onWaitingSubscription = currentElt.onWaiting.listen((_){
 			_stateController.add(AudioPlayerState.WAITING);
 		});
@@ -214,9 +214,9 @@ class AudioPlayer implements AudioPlayerSketch{
 	/// the end of the media was reached or because no further data is available.
 	/// This event occurs based upon HTMLMediaElement (<audio> and <video>) fire
 	/// ended when playback of the media reaches the end of the media.
-	StreamSubscription<Event> onFinishedSubscription;
+	StreamSubscription<Event>? onFinishedSubscription;
 	void _onEnded({bool cancelOthers = true}) {
-		if (cancelOthers) onFinishedSubscription?.cancel?.call();
+		if (cancelOthers) onFinishedSubscription?.cancel();
 		onFinishedSubscription = currentElt.onEnded.listen((_){
 			_stateController.add(AudioPlayerState.COMPLETED);
 		});
@@ -225,9 +225,9 @@ class AudioPlayer implements AudioPlayerSketch{
 	/// [AudioPlayerState.LOADING]
 	///
 	/// The loadedmetadata event is fired when the metadata has been loaded.(duration, size....)
-	StreamSubscription<Event> onInfoLoadedSubscription;
+	StreamSubscription<Event>? onInfoLoadedSubscription;
 	void _onInfoLoaded({bool cancelOthers = true}) {
-		if (cancelOthers) onInfoLoadedSubscription?.cancel?.call();
+		if (cancelOthers) onInfoLoadedSubscription?.cancel();
 		onInfoLoadedSubscription = currentElt.onLoadedMetadata.listen((_){
 			_stateController.add(AudioPlayerState.LOADING);
 		});
@@ -237,9 +237,9 @@ class AudioPlayer implements AudioPlayerSketch{
 	///
 	/// The loadeddata event is fired when the frame at the current playback
 	/// position of the media has finished loading; often the first frame.
-	StreamSubscription<Event> onLoadedSubscription;
+	StreamSubscription<Event>? onLoadedSubscription;
 	void _onLoaded({bool cancelOthers = true}) {
-		if (cancelOthers) onLoadedSubscription?.cancel?.call();
+		if (cancelOthers) onLoadedSubscription?.cancel();
 		onLoadedSubscription = currentElt.onLoadedData.listen((_){
 			_stateController.add(AudioPlayerState.LOADED);
 		});
@@ -250,9 +250,9 @@ class AudioPlayer implements AudioPlayerSketch{
 	///
 	/// The stalled event is fired when the user agent is trying to
 	/// fetch media data, but data is unexpectedly not forthcoming.
-	StreamSubscription<Event> onStalledSubscription;
+	StreamSubscription<Event>? onStalledSubscription;
 	void _onStalled({bool cancelOthers = true}) {
-		if (cancelOthers) onStalledSubscription?.cancel?.call();
+		if (cancelOthers) onStalledSubscription?.cancel();
 		onStalledSubscription  = currentElt.onStalled.listen((_){
 			_stateController.add(AudioPlayerState.SUSPEND);
 		});
@@ -261,18 +261,18 @@ class AudioPlayer implements AudioPlayerSketch{
 	/// [AudioPlayerState.SUSPEND]
 	///
 	/// The suspend event is fired when media data loading has been suspended.
-	StreamSubscription<Event> onSuspendedSubscription;
+	StreamSubscription<Event>? onSuspendedSubscription;
 	void _onSuspend( {bool cancelOthers = true}) {
-		if (cancelOthers) onSuspendedSubscription?.cancel?.call();
+		if (cancelOthers) onSuspendedSubscription?.cancel();
 		onSuspendedSubscription = currentElt.onSuspend.listen((_){
 			_stateController.add(AudioPlayerState.SUSPEND);
 		});
 	}
 	
 	
-	StreamSubscription<Event> onPausedSubscription;
+	StreamSubscription<Event>? onPausedSubscription;
 	void _onPause({bool cancelOthers = true}) {
-		if (cancelOthers) onPausedSubscription?.cancel?.call();
+		if (cancelOthers) onPausedSubscription?.cancel();
 		onPausedSubscription  = currentElt.onPause.listen((_){
 			_stateController.add(AudioPlayerState.PAUSED);
 		});
@@ -281,7 +281,7 @@ class AudioPlayer implements AudioPlayerSketch{
 	@override void dispose(){
 		onPausedSubscription?.cancel();
 		onAudioPositionChangedSubscription?.cancel();
-		onCanPlaySubscription.cancel();
+		onCanPlaySubscription?.cancel();
 		onContinuePlayingSubscription?.cancel();
 		onFinishedSubscription?.cancel();
 		onInfoLoadedSubscription?.cancel();

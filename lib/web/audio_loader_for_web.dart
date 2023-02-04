@@ -12,38 +12,38 @@ class AudioCache implements AudioCacheSketch{
 	@override final String filepath;
 	@override final String folder;
 	@override final String filename;
-	String _selectorKey;
+	String? _selectorKey;
 	String get selectorKey => _selectorKey ??= filepath.replaceAll('/', '_');
 	
-	String rootId;
-	DivElement _rootAudio;
-	AudioElement _elt;
+	final String rootId;
+	DivElement? _rootAudio;
+	AudioElement? _elt;
 	
 	AudioCache(this.filepath, {this.rootId = "simpleAudio"})
 			: folder = _path.dirname(filepath),
 				filename = _path.basename(filepath);
 	
 	@override bool get isCacheReady => _elt != null;
-	@override AudioElement get material => _elt;
+	@override AudioElement? get material => _elt;
 	@override Future init() {
 		print('cache init');
 		_rootAudio = document.querySelector('#$rootId') as DivElement;
 		print('search root audio: $_rootAudio');
 		if (_rootAudio == null){
 			_rootAudio = document.createElement("div") as DivElement;
-			_rootAudio.setAttribute("id", rootId);
-			querySelector('body').append(_rootAudio);
+			_rootAudio!.setAttribute("id", rootId);
+			querySelector('body')!.append(_rootAudio!);
 			print('insert root audio: $_rootAudio');
 		}
 		
-		_elt ??= _rootAudio.querySelector('audio[data-name="$selectorKey"]') as AudioElement;
+		_elt ??= _rootAudio!.querySelector('audio[data-name="$selectorKey"]') as AudioElement;
 		print('search sub audio $selectorKey, $_elt');
 		if (_elt == null){
 			_elt = document.createElement('audio') as AudioElement;
-			_elt.setAttribute("data-name", selectorKey);
-			_elt.setAttribute('src', _path.join("assets/assets/audio", filename));
+			_elt!.setAttribute("data-name", selectorKey);
+			_elt!.setAttribute('src', _path.join("assets/assets/audio", filename));
 			
-			_rootAudio.append(_elt);
+			_rootAudio!.append(_elt!);
 			print('create sub audio $selectorKey, $_elt');
 		}
 		return Future<dynamic>.value();
@@ -53,17 +53,17 @@ class AudioCache implements AudioCacheSketch{
 
 class AudioLoader implements AudioLoaderSketch{
 	
-	@override AudioPlayerSketch player;
+	@override late AudioPlayerSketch player;
 	@override final AudioModel model;
 	AudioCache cache;
-	@override bool get initialized => player?.initialized ?? false;
-	@override bool get isLoaded 	=>  player?.cache?.material != null;
-	@override bool get isPaused 	=>  player?.state == AudioPlayerState.PAUSED;
-	@override bool get isPlaying 	=>  player?.state == AudioPlayerState.PLAYING || player?.state == AudioPlayerState.CONTINUE;
-	@override bool get isCompleted=>  player?.state == AudioPlayerState.COMPLETED;
-	@override bool get isStopped 	=>  player?.state == AudioPlayerState.STOPPED;
-	@override AudioPlayerState get state {
-		return player?.state;
+	@override bool get initialized => player.initialized ?? false;
+	@override bool get isLoaded 	=>  player.cache.material != null;
+	@override bool get isPaused 	=>  player.state == AudioPlayerState.PAUSED;
+	@override bool get isPlaying 	=>  player.state == AudioPlayerState.PLAYING || player.state == AudioPlayerState.CONTINUE;
+	@override bool get isCompleted=>  player.state == AudioPlayerState.COMPLETED;
+	@override bool get isStopped 	=>  player.state == AudioPlayerState.STOPPED;
+	@override AudioPlayerState? get state {
+		return player.state;
 	}
 	
 	AudioLoader(this.model): cache = AudioCache(model.url){
@@ -121,7 +121,7 @@ class AudioLoader implements AudioLoaderSketch{
 		}
 	}
 	
-	StreamSubscription<AudioPlayerState> get _onPlayerStateSubscription =>
+	StreamSubscription<AudioPlayerState>? get _onPlayerStateSubscription =>
 		(player as AudioPlayer).onPlayerStateChangedSubscription;
 	
 	
@@ -163,38 +163,38 @@ class AudioLoader implements AudioLoaderSketch{
 			}
 		});	}
 	
-	void Function() _onPlay;
+	void Function()? _onPlay;
 	@override void onPlay(void onData()) {
 		_playerStateMonitorInit();
 		_onPlay = onData;
 	}
 	
-	void Function() _onStopped;
+	void Function()? _onStopped;
 	@override void onStopped(void onData()) {
 		_onStopped = onData;
 		_playerStateMonitorInit();
 	}
 	
 // ignore: unused_field
-	void Function() _onLoaded;
+	void Function()? _onLoaded;
 	@override void onLoaded(void onData()) {
 		_onLoaded = onData;
 		_playerStateMonitorInit();
 	}
 	
-	void Function() _onLoading;
+	void Function()? _onLoading;
 	@override void onLoading(void onData()) {
 		_onLoading = onData;
 		_playerStateMonitorInit();
 	}
 	
-	void Function() _onPaused;
+	void Function()? _onPaused;
 	@override void onPaused(void onData()) {
 		_playerStateMonitorInit();
 		_onPaused = onData;
 	}
 	
-	void Function() _onCompleted;
+	void Function()? _onCompleted;
 	@override void onCompleted(void onData()) {
 		_playerStateMonitorInit();
 		_onCompleted = onData;

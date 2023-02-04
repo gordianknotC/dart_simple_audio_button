@@ -3,7 +3,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:animator/animator.dart';
 
-
 class SpiningIcon extends StatelessWidget {
 	final IconData iconData;
 	final Color color;

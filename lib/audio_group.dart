@@ -1,7 +1,7 @@
-import 'package:behaviors/behaviors.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:ui_common_behaviors/ui_common_behaviors.dart';
 
 
 
@@ -11,13 +11,13 @@ class SimpleAudioGroup<T> extends StatelessWidget {
 	@override Key key;
 	final bool multiSelection;
 	final List<T> resources;
-	final List<T> initialSelecteds;
+	final List<T>? initialSelecteds;
 	final Widget Function(BuildContext ctx, List<T>) builder;
 	final SingleGroupAware<T> awareness;
 	
 	SimpleAudioGroup({
-		@required this.key, 		@required this.resources,
-		@required this.builder, this.multiSelection = false,
+		required this.key, 		required this.resources,
+		required this.builder, this.multiSelection = false,
 		this.initialSelecteds
 	}): awareness = SingleGroupAware.singleton(
 			children: resources,

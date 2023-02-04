@@ -14,7 +14,7 @@ abstract class AudioCacheSketch{
 }
 
 abstract class AudioPlayerSketch{
-	AudioCacheSketch cache;
+	late AudioCacheSketch cache;
 	Future<bool> initAudio();
 	Future play();
 	Future seek(double time);
@@ -23,7 +23,7 @@ abstract class AudioPlayerSketch{
 	bool get initialized;
 	Stream<AudioPlayerState> get stateStream;
 	Stream get positionChangedStream;
-	AudioPlayerState get state;
+	AudioPlayerState? get state;
 	void onReady(void cb());
 	void dispose();
 }
@@ -41,7 +41,7 @@ abstract class AudioLoaderSketch{
 	bool get isCompleted;
 	bool get isStopped 	;
 	
-	AudioPlayerState get state;
+	AudioPlayerState? get state;
 	Future<bool> initAudio();
 	
 	void playFromStart();
