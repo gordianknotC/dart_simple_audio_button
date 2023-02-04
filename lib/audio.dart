@@ -104,7 +104,7 @@ class SimpleAudioButton extends StatefulWidget
     this.height = 32,
     this.onPress,
     required this.awareness,
-        required this.spinIcon,
+    required this.spinIcon,
     this.playIcon,
     this.stopIcon,
     this.pauseIcon,
@@ -207,7 +207,7 @@ class SimpleAudioButtonState extends State<SimpleAudioButton>
     widget.onPress?.call(widget.model);
   }
 
-  Widget _buildButton(IconData icon, [bool spining = false]) {
+  Widget _buildButton(IconData icon, [bool spinning = false]) {
     final title = widget.model.title.split('-');
     final label = Text.rich(TextSpan(children: [
       TextSpan(text: title[0], style: widget.literalStyle),
@@ -234,8 +234,8 @@ class SimpleAudioButtonState extends State<SimpleAudioButton>
         elevation: 2,
         child: ElevatedButton.icon(
           onPressed: null,
-          icon: spining
-              ? SpiningIcon(icon,
+          icon: spinning
+              ? SpinningIcon(icon,
                   color: widget.awareness().isActivated(widget.model)
                       ? widget.activeIconColor
                       : widget.inactiveIconColor,

@@ -44,7 +44,7 @@ mixin StatefulMixin<T extends StatefulWidget> on State<T>{
 		if (mounted){
 			setState(cb);
 		}else{
-			print('[Errror] setState called after dispose: ${runtimeType}>${this.widget.key}');
+			print('[Error] setState called after dispose: ${runtimeType}>${this.widget.key}');
 		}
 	}
 	

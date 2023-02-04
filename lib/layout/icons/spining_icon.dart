@@ -3,11 +3,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:animator/animator.dart';
 
-class SpiningIcon extends StatelessWidget {
+class SpinningIcon extends StatelessWidget {
 	final IconData iconData;
 	final Color color;
 	final double size;
-	const SpiningIcon(this.iconData, {this.color = Colors.white, this.size = 24});
+	const SpinningIcon(this.iconData, {this.color = Colors.white, this.size = 24});
 	
 	@override
 	Widget build(BuildContext context) {
