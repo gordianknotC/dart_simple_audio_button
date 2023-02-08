@@ -1,5 +1,5 @@
-import 'audio_model.dart';
-import 'sketches/audio_loader.dart';
+import './audio_model.dart';
+import './sketches/audio_loader.dart';
 
 class AudioCache implements AudioCacheSketch{
 	@override late String  filepath;

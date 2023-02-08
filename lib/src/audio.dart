@@ -1,17 +1,15 @@
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
+import 'package:simple_audio_button/src/layout/icons/spining_icon.dart';
+import 'package:simple_audio_button/src/layout/stateful.dart';
 import 'package:ui_common_behaviors/ui_common_behaviors.dart';
-import 'package:simple_audio_button/layout/stateful.dart';
-import 'package:simple_audio_button/layout/icons/spining_icon.dart';
 
+import '../simple_audio_button.dart';
 import 'audio_loader.dart'
     if (dart.library.io) 'mobile/audio_loader_for_mobile.dart'
-    if (dart.library.html) 'web/audio_loader_for_web.dart';
+    if (dart.library.js) 'web/audio_loader_for_web.dart';
 
-import 'audio_model.dart';
 
 
 enum EBtState {
