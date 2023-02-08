@@ -11,7 +11,7 @@ environment:
 
 dependencies:
   audioplayer: ^0.8.1
-  path_provider: ^1.4.5
+  path_provider: ^2.0.12
   flutter_mobx: ^2.0.6+5
   animator: ^3.2.0
   ui_common_behaviors:
