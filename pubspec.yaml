@@ -10,10 +10,10 @@ environment:
   sdk: ">=2.12.0 <3.0.0"
 
 dependencies:
-  audioplayer: ^0.5.2
+  audioplayer: ^0.8.1
   path_provider: ^1.4.5
   flutter_mobx: ^2.0.6+5
-  animator: ^1.0.0+2
+  animator: ^3.2.0
   ui_common_behaviors:
     git:
       url: https://github.com/gordianknotC/dart_common_ui_behaviors.git
