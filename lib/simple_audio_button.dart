@@ -1,8 +1,8 @@
 library simple_audio_button;
 
 export 'src/audio_loader.dart'
-	if (dart.library.io) 'mobile/audio_loader_for_mobile.dart'
-	if (dart.library.js) 'web/audio_loader_for_web.dart';
+	if (dart.library.io) 'src/mobile/audio_loader_for_mobile.dart'
+	if (dart.library.js) 'src/web/audio_loader_for_web.dart';
 
 // ignore: directives_ordering
 export 'src/audio.dart';
